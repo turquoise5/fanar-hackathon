@@ -9,7 +9,10 @@ const TranscriptionUI = ({
   startLiveSimulation,
   stopLiveSimulation, 
   isProcessing, 
-  clearAll
+  clearAll, 
+  summary, 
+  isSummarizing, 
+  generateSummary
 }) => (
   <div className="transcription-container">
     <h1 className="app-title">Simulated Live Transcription by Fanar</h1>
@@ -72,6 +75,16 @@ const TranscriptionUI = ({
         ) : (
             translation || ""
         )}
+      </div>
+    </div>
+
+    <div className="section">
+      <h2>Summary</h2>
+      <button onClick={generateSummary} disabled={isSummarizing || !transcript}>
+        {isSummarizing ? "Summarizing..." : "Generate Summary"}
+      </button>
+      <div className="box arabic" style={{ marginTop: "10px" }}>
+        {summary}
       </div>
     </div>
   </div>

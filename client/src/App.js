@@ -14,6 +14,8 @@ function App() {
   const intervalRef = useRef(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const lastProcessedRef = useRef("");
+  const [summary, setSummary] = useState("");
+  const [isSummarizing, setIsSummarizing] = useState(false);
 
   const clearAll = () => {
       // Reset states
@@ -120,6 +122,19 @@ function App() {
   }, [recording, processTranscript]);
   
 
+  const generateSummary = async () => {
+    setIsSummarizing(true);
+    try {
+      const res = await axios.post("http://localhost:4000/summarize", { text: transcript });
+      setSummary(res.data.summary);
+    } catch (err) {
+      console.error("Summary failed:", err);
+      setSummary("Summary failed.");
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
   return (
     <TranscriptionUI 
       transcript={transcript}
@@ -129,6 +144,9 @@ function App() {
       startLiveSimulation={startLiveSimulation}
       stopLiveSimulation={stopLiveSimulation}
       isProcessing={isProcessing}
+      generateSummary={generateSummary}
+      summary={summary}
+      isSummarizing={isSummarizing}
       clearAll={clearAll}
     />
   );

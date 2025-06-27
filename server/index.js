@@ -99,6 +99,35 @@ app.post("/transcribe", upload.single("audio"), async (req, res) => {
   }
 });
 
+app.post("/summarize", async (req, res) => {
+  const { text } = req.body;
+  try {
+    const summaryResponse = await axios.post(
+      "https://api.fanar.qa/v1/chat/completions",
+      {
+        model: "Fanar",
+        messages: [
+          {
+            role: "user",
+            content: `لخص النص التالي بإيجاز وباللغة العربية الفصحى:\n\n${text}`
+          }
+        ]
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${FANAR_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    const summary = summaryResponse.data.choices[0].message.content;
+    res.json({ summary });
+  } catch (err) {
+    console.error("Fanar summary error:", err.message);
+    res.status(500).json({ error: "Summary failed." });
+  }
+});
+
 app.listen(4000, () => {
   console.log("Server running on http://localhost:4000");
 });
