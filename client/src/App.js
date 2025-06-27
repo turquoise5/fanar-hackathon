@@ -78,20 +78,25 @@ function App() {
     async (text) => {
       const trimmed = text.trim(); 
 
-      // Skip if no new content (prevents duplicate processing)
-      if (trimmed.length < 10 || trimmed === lastProcessedRef.current) return;
+      // Only process new text
+      let newText = trimmed;
+      if (lastProcessedRef.current && trimmed.startsWith(lastProcessedRef.current)) {
+        newText = trimmed.slice(lastProcessedRef.current.length).trim();
+      }
+
+      if (newText.length < 1) return; // process even small new chunks
 
       setIsProcessing(true);
 
       try {
-        const res = await axios.post("http://localhost:4000/process", { text });
-        setCleanedMSA(res.data.msa);
-        setTranslation(res.data.english);
-        lastProcessedRef.current = trimmed; // track last processed
+        const res = await axios.post("http://localhost:4000/process", { text: newText });
+        setCleanedMSA((prev) => prev + " " + res.data.msa);
+        setTranslation((prev) => prev + " " + res.data.english);
+        lastProcessedRef.current = trimmed; // update to the latest processed transcript
       } catch (err) {
         console.error("Processing failed:", err);
       } finally {
-        setIsProcessing(false); // stop loading
+        setIsProcessing(false);
       }
     }, 
     []

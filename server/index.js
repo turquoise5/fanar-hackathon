@@ -59,14 +59,14 @@ app.post("/process", async (req, res) => {
     );
 
     console.log("Translation response:", translateResponse.data);
-    let english = "";
-    if (translateResponse.data.translated) {
-      english = translateResponse.data.translated;
-    } else if (translateResponse.data.translations && translateResponse.data.translations.length > 0) {
-      english = translateResponse.data.translations[0].translated;
-    } else {
-      throw new Error("Unexpected translation response structure");
-    }
+    let english = translateResponse.data.text;
+    // if (translateResponse.data.translated) {
+    //   english = translateResponse.data.translated;
+    // } else if (translateResponse.data.translations && translateResponse.data.translations.length > 0) {
+    //   english = translateResponse.data.translations[0].translated;
+    // } else {
+    //   throw new Error("Unexpected translation response structure");
+    // }
 
     res.json({ msa, english });
   } catch (err) {
