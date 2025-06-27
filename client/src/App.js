@@ -1,16 +1,31 @@
 import './App.css';
 import axios from "axios";
-import React, { useRef, useState } from "react";
-
+import React, { useRef, useState, useEffect, useCallback } from "react";
+import TranscriptionUI from './translation'
 
 function App() {
   const [transcript, setTranscript] = useState("");
   const [recording, setRecording] = useState(false);
+  const [cleanedMSA, setCleanedMSA] = useState("");
+  const [translation, setTranslation] = useState("");
+  const transcriptRef = useRef(transcript); 
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
   const intervalRef = useRef(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const lastProcessedRef = useRef("");
 
+  const clearAll = () => {
+      // Reset states
+      setTranscript("");
+      setCleanedMSA("");
+      setTranslation("");
+      transcriptRef.current = "";
+  }
+
+  // live recording and transcription
   const startLiveSimulation = async () => {
+    clearAll()
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     streamRef.current = stream;
     setRecording(true);
@@ -49,26 +64,70 @@ function App() {
     intervalRef.current = setInterval(startChunkRecorder, 6000); // buffer before next
   };
 
-  const stopLiveSimulation = () => {
+  const stopLiveSimulation = async () => {
     clearInterval(intervalRef.current);
     mediaRecorderRef.current?.stop();
     streamRef.current?.getTracks().forEach(track => track.stop());
     setRecording(false);
+    
+    await processTranscript(transcriptRef.current);
   };
+  
+
+  const processTranscript = useCallback(
+    async (text) => {
+      const trimmed = text.trim(); 
+
+      // Skip if no new content (prevents duplicate processing)
+      if (trimmed.length < 10 || trimmed === lastProcessedRef.current) return;
+
+      setIsProcessing(true);
+
+      try {
+        const res = await axios.post("http://localhost:4000/process", { text });
+        setCleanedMSA(res.data.msa);
+        setTranslation(res.data.english);
+        lastProcessedRef.current = trimmed; // track last processed
+      } catch (err) {
+        console.error("Processing failed:", err);
+      } finally {
+        setIsProcessing(false); // stop loading
+      }
+    }, 
+    []
+  );  
+
+  // Sync ref with state
+  useEffect(() => {
+    transcriptRef.current = transcript;
+  }, [transcript]);
+
+
+  useEffect(() => {
+    if (!recording) return;
+
+    const interval = setInterval(() => {
+      // Use ref to get latest transcript
+      processTranscript(transcriptRef.current); 
+    }, 15000);
+    
+    return () => clearInterval(interval);
+  }, [recording, processTranscript]);
+  
 
   return (
-    <div style={{ padding: 24 }}>
-      <h1> Simulated Live Transcription (Fanar)</h1>
-      <button onClick={startLiveSimulation} disabled={recording}>Start</button>
-      <button onClick={stopLiveSimulation} disabled={!recording}>Stop</button>
-
-      <div style={{ marginTop: 24, direction: "rtl", fontSize: 18 }}>
-        {transcript || "ابدأ التحدث وسنقوم بالنسخ كل ٥ ثوانٍ"}
-      </div>
-    </div>
+    <TranscriptionUI 
+      transcript={transcript}
+      cleanedMSA={cleanedMSA}
+      translation={translation}
+      recording={recording}
+      startLiveSimulation={startLiveSimulation}
+      stopLiveSimulation={stopLiveSimulation}
+      isProcessing={isProcessing}
+      clearAll={clearAll}
+    />
   );
 }
-
 export default App;
 
 // translate to english; say them in english 
