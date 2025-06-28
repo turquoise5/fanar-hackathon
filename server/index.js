@@ -128,6 +128,46 @@ app.post("/summarize", async (req, res) => {
   }
 });
 
+app.post("/speak", async (req, res) => {
+  const { text } = req.body;
+
+  if (!text) {
+    return res.status(400).json({ error: "Text is required" });
+  }
+
+  try {
+    const ttsResponse = await axios.post(
+      "https://api.fanar.qa/v1/audio/speech",
+      {
+        model: "Fanar-Aura-TTS-1",
+        input: text,
+        voice: "default",
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${FANAR_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        responseType: "arraybuffer",
+      }
+    );
+
+    res.setHeader("Content-Type", "audio/mpeg");
+    res.send(ttsResponse.data);
+  } catch (err) {
+    if (err.response && err.response.data) {
+      const errorString = Buffer.from(err.response.data).toString("utf-8");
+      console.error("API error data:", errorString);
+      console.error("API error status:", err.response.status);
+    } else {
+      console.error("Error:", err.message);
+    }
+
+    res.status(500).json({ error: "Text-to-speech failed." });
+  }
+});
+
+
 app.listen(4000, () => {
   console.log("Server running on http://localhost:4000");
 });

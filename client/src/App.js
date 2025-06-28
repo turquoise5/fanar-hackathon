@@ -2,6 +2,7 @@ import './App.css';
 import axios from "axios";
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import TranscriptionUI from './translation'
+import SignLanguageDetector from "./sign_translation";
 
 function App() {
   const [transcript, setTranscript] = useState("");
@@ -136,6 +137,7 @@ function App() {
   };
 
   return (
+    <>
     <TranscriptionUI 
       transcript={transcript}
       cleanedMSA={cleanedMSA}
@@ -149,6 +151,8 @@ function App() {
       isSummarizing={isSummarizing}
       clearAll={clearAll}
     />
+    <SignLanguageDetector />
+    </>
   );
 }
 export default App;
