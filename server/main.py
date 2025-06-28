@@ -107,7 +107,7 @@ async def generate_tts(request: Request):
     if response.status_code == 200:
         return StreamingResponse(BytesIO(response.content), media_type="audio/mpeg")
     else:
-        raise HTTPException(status_code=500, detail="Text-to-Speech failed. Please try again.")
+        # raise HTTPException(status_code=500, detail="Text-to-Speech failed. Please try again.")
         print("Fanar API Error:")
         print("Status:", response.status_code)
         print("Response:", response.text)
