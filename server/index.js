@@ -15,10 +15,9 @@ const FANAR_API_KEY = process.env.FANAR_KEY;
 app.use(express.json()); // For parsing application/json
 app.use(cors());
 
-
 // Clean endpoint: returns MSA only
 app.post("/clean", async (req, res) => {
-  const { text } = req.body;
+  const { text,  context} = req.body;
   try {
     const chatResponse = await axios.post(
       "https://api.fanar.qa/v1/chat/completions",
@@ -27,8 +26,11 @@ app.post("/clean", async (req, res) => {
         messages: [
           {
             role: "user",
-            content: `صحح النص التالي نحوياً واملائياً، وحوله إلى الفصحى مع الحفاظ على المعنى. إذا كان في النص أي أخطاء أو غموض، لا تضف أي تعليق أو شرح أو تصحيح إضافي، فقط حاول فهم المقصود من السياق وأعد كتابة النص كما هو بأفضل صورة ممكنة. لا تكتب أي شيء آخر غير النص المصحح، ولا تضف أي مقدمة أو شرح أو عبارات إضافية:\n\n${text}`
-            // content: `صحح النص التالي نحوياً واملائياً، وحوله إلى الفصحى مع الحفاظ على المعنى. لا تكتب أي شيء غير النص المصحح، لا تكتب مقدمة أو شرح أو أي عبارات إضافية:\n\n${text}`
+            content: `ترجم النص التالي إلى اللغة العربية الفصحى الحديثة فقط. إذا كان هناك أي غموض في الكلمات أو كان النص غير واضح بسبب مشاكل في النسخ، استخدم السياق المقدم لمحاولة فهم المعنى الصحيح. أضف علامات الترقيم المناسبة. دورك هو مترجم إلى العربية الفصحى، ويجب أن تخرج فقط الترجمة النهائية دون أي شرح أو تعليق أو إضافات أخرى.
+                      سياق إضافي: ${context}
+
+                      النص:
+                      ${text}`
           }
         ]
       },
@@ -73,56 +75,6 @@ app.post("/translate", async (req, res) => {
     res.status(500).json({ error: "Translation failed." });
   }
 });
-
-// app.post("/process", async (req, res) => {
-//   const { text } = req.body;
-
-//   try {
-//     const chatResponse = await axios.post(
-//       "https://api.fanar.qa/v1/chat/completions",
-//         {
-//         model: "Fanar",
-//         messages: [
-//             {
-//             role: "user",
-//             content: `صحح النص التالي نحوياً واملائياً، وحوله إلى الفصحى مع الحفاظ على المعنى. لا تكتب أي شيء غير النص المصحح، لا تكتب مقدمة أو شرح أو أي عبارات إضافية:\n\n${text}`
-//             }
-//         ]
-//         }, 
-//         {
-//             headers: {
-//             Authorization: `Bearer ${FANAR_API_KEY}`,
-//             "Content-Type": "application/json",
-//             },
-//         }
-//     );
-
-//     const msa = chatResponse.data.choices[0].message.content;
-
-//     // 2. Translate to English
-//     const translateResponse = await axios.post(
-//       "https://api.fanar.qa/v1/translations",
-//       {
-//         model: "Fanar-Shaheen-MT-1",
-//         text: msa,
-//         langpair: "ar-en",
-//         preprocessing: "default",
-//       },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${FANAR_API_KEY}`,
-//           "Content-Type": "application/json",
-//         },
-//       }
-//     );
-
-//     let english = translateResponse.data.text;
-//     res.json({ msa, english });
-//   } catch (err) {
-//     console.error("Fanar processing error:", err.message);
-//     res.status(500).json({ error: "Post-processing failed." });
-//   }
-// });
 
 app.post("/transcribe", upload.single("audio"), async (req, res) => {
   try {
@@ -185,39 +137,6 @@ app.post("/summarize", async (req, res) => {
     res.status(500).json({ error: "Summary failed." });
   }
 });
-
-// app.post("/summarize", async (req, res) => {
-//   const { text, lang } = req.body;
-//   try {
-//     const prompt = 
-//       lang === "en" 
-//       ? "Summarize the following text in concise English, don't include anything but the translation in your response:\n\n${text}"
-//       : `لا تضع اي شي اخر في ردك الا التلخيص .لخص النص التالي بإيجاز وباللغة العربية الفصحى:\n\n${text}`;
-//     const summaryResponse = await axios.post(
-//       "https://api.fanar.qa/v1/chat/completions",
-//       {
-//         model: "Fanar",
-//         messages: [
-//           {
-//             role: "user",
-//             content: prompt,
-//           }
-//         ]
-//       },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${FANAR_API_KEY}`,
-//           "Content-Type": "application/json",
-//         },
-//       }
-//     );
-//     const summary = summaryResponse.data.choices[0].message.content;
-//     res.json({ summary });
-//   } catch (err) {
-//     console.error("Fanar summary error:", err.message);
-//     res.status(500).json({ error: "Summary failed." });
-//   }
-// });
 
 app.listen(4000, () => {
   console.log("Server running on http://localhost:4000");

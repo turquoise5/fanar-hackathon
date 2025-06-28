@@ -15,10 +15,12 @@ const TranscriptionUI = ({
   generateSummary, 
   showEnglishSummary, 
   englishSummary, 
-  setShowEnglishSummary
+  setShowEnglishSummary, 
+  context, 
+  setContext
 }) => (
   <div className="transcription-container">
-    <h1 className="app-title">Simulated Live Transcription by Fanar</h1>
+    <h1 className="app-title">Nasma3</h1>
 
     <div className="controls">
       <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
@@ -50,6 +52,19 @@ const TranscriptionUI = ({
         </button>
       </div>
 
+    </div>
+    
+    <div style={{ margin: "16px 0" }}>
+      <label>
+        <h2>Context For the Transcribtion:</h2>
+        <textarea
+          value={context}
+          onChange={e => setContext(e.target.value)}
+          placeholder="Add any context to help transcribe/translate more accurately..."
+          rows={3}
+          style={{ width: "100%", marginTop: 4, resize: "vertical" }}
+        />
+      </label>
     </div>
 
     <div className="section">
@@ -101,7 +116,7 @@ const TranscriptionUI = ({
           {englishSummary}
         </div>
       )}
-    </div>    
+    </div>
   </div>
 );
 

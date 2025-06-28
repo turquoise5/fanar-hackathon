@@ -18,6 +18,7 @@ function App() {
   const [englishSummary, setEnglishSummary] = useState("");
   const [showEnglishSummary, setShowEnglishSummary] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [context, setContext] = useState("");
 
   const clearAll = () => {
       // Reset states
@@ -96,7 +97,7 @@ function App() {
 
       try {
         // 1. Clean to MSA
-        const cleanRes = await axios.post("http://localhost:4000/clean", { text: newText });
+        const cleanRes = await axios.post("http://localhost:4000/clean", { text: newText, context });
         setCleanedMSA((prev) => prev + " " + cleanRes.data.msa);
 
         // 2. Translate to English
@@ -110,7 +111,7 @@ function App() {
         setIsProcessing(false);
       }
     }, 
-    []
+    [context]
   );  
 
   // Sync ref with state
@@ -140,7 +141,7 @@ function App() {
   
       // English summary if toggled
       if (showEnglishSummary) {
-        const enRes = await axios.post("http://localhost:4000/summarize", { text: summary, lang: "en" });
+        const enRes = await axios.post("http://localhost:4000/translate", { text: summary});
         setEnglishSummary(enRes.data.summary);
       }
     } catch (err) {
@@ -169,6 +170,8 @@ function App() {
       generateSummary={generateSummary}
       isSummarizing={isSummarizing}
       clearAll={clearAll}
+      context={context}
+      setContext={setContext}
     />
   );
 }
