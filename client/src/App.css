@@ -94,6 +94,30 @@ body {
   animation: spin 1s linear infinite;
 }
 
+.webcam-toggle-btn {
+  position: fixed;    /* fixed to viewport */
+  top: 20px;          /* distance from top */
+  right: 20px;        /* distance from right */
+  z-index: 1000;      /* on top of other elements */
+  padding: 10px 16px;
+  background-color: #4caf50; /* example green */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.webcam-container {
+  position: fixed;     /* Fix to viewport */
+  top: 60px;           /* Below your button (which is at 20px) */
+  left: 50%;           /* Move to horizontal center */
+  transform: translateX(-50%); /* Shift left by half its width to center */
+  z-index: 1000;       /* Above other elements */
+  border: 2px solid #333; /* Optional styling */
+  border-radius: 8px;     /* Optional styling */
+  background: #000;       /* Optional background */
+}
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
