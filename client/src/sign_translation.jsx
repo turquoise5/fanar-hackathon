@@ -105,6 +105,7 @@ const SignLanguageDetector = () => {
         const audio = new Audio(audioUrl);
         audio.play();
     } catch (error) {
+        alert("Text-to-Speech failed. Please try again.");
         console.error("TTS failed:", error);
     }
     };
@@ -129,8 +130,8 @@ const SignLanguageDetector = () => {
 
   return (
     <div>
-        <button className="webcam-toggle-btn" onClick={toggleWebcam} style={{ marginBottom: "10px" }}>
-            {webcamOn ? "Stop Webcam" : "Sign2Speech"}
+        <button className="webcam-toggle-btn" onClick={toggleWebcam}>
+        {webcamOn ? "Stop Webcam" : "Sign2Speech"}
         </button>
 
         {webcamOn && (
@@ -158,10 +159,11 @@ const SignLanguageDetector = () => {
             <strong>Assembled Word:</strong> {assembledWord || "None"}
         </div>
 
-        <div style={{ marginTop: "20px" }}>
+        <div style={{ marginTop: "10px" }}>
         <strong>Sentence:</strong> {wordHistory.join(" ") || "None"}
         
         <div style={{ marginTop: "10px" }}>
+            <button onClick={() => setAssembledWord("")}>Reset Word</button>
             <button onClick={() => setWordHistory([])}>Reset Sentence</button>
             <button onClick={speakSentence} style={{ marginLeft: "10px" }}>
             Speak Sentence

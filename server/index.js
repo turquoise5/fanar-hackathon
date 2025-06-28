@@ -165,6 +165,7 @@ app.post("/speak", async (req, res) => {
     res.setHeader("Content-Type", "audio/mpeg");
     res.send(ttsResponse.data);
   } catch (err) {
+    alert("Text-to-Speech failed. Please try again.");
     if (err.response && err.response.data) {
       const errorString = Buffer.from(err.response.data).toString("utf-8");
       console.error("API error data:", errorString);
