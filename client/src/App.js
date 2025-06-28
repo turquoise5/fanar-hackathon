@@ -16,7 +16,10 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const lastProcessedRef = useRef("");
   const [summary, setSummary] = useState("");
+  const [englishSummary, setEnglishSummary] = useState("");
+  const [showEnglishSummary, setShowEnglishSummary] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [context, setContext] = useState("");
 
   const clearAll = () => {
       // Reset states
@@ -24,6 +27,8 @@ function App() {
       setCleanedMSA("");
       setTranslation("");
       transcriptRef.current = "";
+      setSummary(""); 
+      setEnglishSummary(""); 
   }
 
   // live recording and transcription
@@ -92,17 +97,22 @@ function App() {
       setIsProcessing(true);
 
       try {
-        const res = await axios.post("http://localhost:4000/process", { text: newText });
-        setCleanedMSA((prev) => prev + " " + res.data.msa);
-        setTranslation((prev) => prev + " " + res.data.english);
-        lastProcessedRef.current = trimmed; // update to the latest processed transcript
-      } catch (err) {
+        // 1. Clean to MSA
+        const cleanRes = await axios.post("http://localhost:4000/clean", { text: newText, context });
+        setCleanedMSA((prev) => prev + " " + cleanRes.data.msa);
+
+        // 2. Translate to English
+        const translateRes = await axios.post("http://localhost:4000/translate", { msa: cleanRes.data.msa });
+        setTranslation((prev) => prev + " " + translateRes.data.english);
+
+        lastProcessedRef.current = trimmed;      
+    } catch (err) {
         console.error("Processing failed:", err);
       } finally {
         setIsProcessing(false);
       }
     }, 
-    []
+    [context]
   );  
 
   // Sync ref with state
@@ -117,7 +127,7 @@ function App() {
     const interval = setInterval(() => {
       // Use ref to get latest transcript
       processTranscript(transcriptRef.current); 
-    }, 15000);
+    }, 30000);
     
     return () => clearInterval(interval);
   }, [recording, processTranscript]);
@@ -126,15 +136,25 @@ function App() {
   const generateSummary = async () => {
     setIsSummarizing(true);
     try {
+      // Arabic summary
       const res = await axios.post("http://localhost:4000/summarize", { text: transcript });
       setSummary(res.data.summary);
+  
+      // English summary if toggled
+      if (showEnglishSummary) {
+        const enRes = await axios.post("http://localhost:4000/translate", { msa: res.data.summary});
+        setEnglishSummary(enRes.data.english);
+      }
     } catch (err) {
-      console.error("Summary failed:", err);
+      console.log("error translating:", err);
       setSummary("Summary failed.");
+      setEnglishSummary("");
+      console.error("Summary failed:", err);
     } finally {
       setIsSummarizing(false);
     }
   };
+
 
   return (
     <>
@@ -146,10 +166,15 @@ function App() {
       startLiveSimulation={startLiveSimulation}
       stopLiveSimulation={stopLiveSimulation}
       isProcessing={isProcessing}
-      generateSummary={generateSummary}
       summary={summary}
+      englishSummary={englishSummary}
+      showEnglishSummary={showEnglishSummary}
+      setShowEnglishSummary={setShowEnglishSummary}
+      generateSummary={generateSummary}
       isSummarizing={isSummarizing}
       clearAll={clearAll}
+      context={context}
+      setContext={setContext}
     />
     <SignLanguageDetector />
     </>

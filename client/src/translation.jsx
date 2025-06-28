@@ -13,20 +13,23 @@ const TranscriptionUI = ({
   clearAll, 
   summary, 
   isSummarizing, 
-  generateSummary
+  generateSummary,
+  showEnglishSummary, 
+  englishSummary, 
+  setShowEnglishSummary, 
+  context, 
+  setContext
 }) => {
     const [isPlaying, setIsPlaying] = useState(false);
-
     useEffect(() => {
       // Stop UI play icon when audio ends
       setOnAudioEnd(() => {
         setIsPlaying(false);
       });
-    }, []);
-
+      }, []);
   return (
     <div className="transcription-container">
-      <h1 className="app-title">Simulated Live Transcription by Fanar</h1>
+      <h1 className="app-title">Nasma3</h1>
 
       <div className="controls">
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
@@ -57,8 +60,20 @@ const TranscriptionUI = ({
             Clear All
           </button>
         </div>
-
+ 
+    <div style={{ margin: "16px 0" }}>
+      <label>
+        <h2>Context For the Transcription:</h2>
+        <textarea
+          value={context}
+          onChange={e => setContext(e.target.value)}
+          placeholder="Add any context to help transcribe/translate more accurately..."
+          rows={3}
+          style={{ width: "100%", marginTop: 4, resize: "vertical" }}
+        />
+      </label>
       </div>
+     </div>
 
       <div className="section">
         <h2>Transcription: </h2>
@@ -123,15 +138,26 @@ const TranscriptionUI = ({
         </div>
       </div>
       
-      <div className="section">
-        <h2>Summary</h2>
-        <button onClick={generateSummary} disabled={isSummarizing || !transcript}>
-          {isSummarizing ? "Summarizing..." : "Generate Summary"}
-        </button>
-        <div className="box arabic" style={{ marginTop: "10px" }}>
-          {summary}
-        </div>
+  <div className="section">
+      <h2>Summary</h2>
+      <button onClick={generateSummary} disabled={isSummarizing || !transcript}>
+        {isSummarizing ? "Summarizing..." : "Generate Summary"}
+      </button>
+      <button
+        style={{ marginLeft: 10 }}
+        onClick={() => setShowEnglishSummary((prev) => !prev)}
+        disabled={isSummarizing}
+      >
+        {showEnglishSummary ? "Hide English Summary" : "Show English Summary"}
+      </button>
+      <div className="box arabic" style={{ marginTop: "10px" }}>
+        {summary}
       </div>
+      {showEnglishSummary && (
+        <div className="box english" style={{ marginTop: "10px" }}>
+          {englishSummary}
+        </div>
+      )}
     </div>
   );
 };

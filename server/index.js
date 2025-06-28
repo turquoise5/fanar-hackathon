@@ -15,32 +15,44 @@ const FANAR_API_KEY = process.env.FANAR_KEY;
 app.use(express.json()); // For parsing application/json
 app.use(cors());
 
-app.post("/process", async (req, res) => {
-  const { text } = req.body;
-
+// Clean endpoint: returns MSA only
+app.post("/clean", async (req, res) => {
+  const { text,  context} = req.body;
   try {
     const chatResponse = await axios.post(
       "https://api.fanar.qa/v1/chat/completions",
-        {
+      {
         model: "Fanar",
         messages: [
-            {
+          {
             role: "user",
-            content: `صحح النص التالي نحوياً واملائياً، وحوله إلى الفصحى مع الحفاظ على المعنى. لا تكتب أي شيء غير النص المصحح، لا تكتب مقدمة أو شرح أو أي عبارات إضافية:\n\n${text}`
-            }
+            content: `ترجم النص التالي إلى اللغة العربية الفصحى الحديثة فقط. إذا كان هناك أي غموض في الكلمات أو كان النص غير واضح بسبب مشاكل في النسخ، استخدم السياق المقدم لمحاولة فهم المعنى الصحيح. أضف علامات الترقيم المناسبة. دورك هو مترجم إلى العربية الفصحى، ويجب أن تخرج فقط الترجمة النهائية دون أي شرح أو تعليق أو إضافات أخرى.
+                      سياق إضافي: ${context}
+
+                      النص:
+                      ${text}`
+          }
         ]
-        }, 
-        {
-            headers: {
-            Authorization: `Bearer ${FANAR_API_KEY}`,
-            "Content-Type": "application/json",
-            },
-        }
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${FANAR_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
     );
-
     const msa = chatResponse.data.choices[0].message.content;
+    res.json({ msa });
+  } catch (err) {
+    console.error("Fanar clean error:", err.message);
+    res.status(500).json({ error: "MSA cleaning failed." });
+  }
+});
 
-    // 2. Translate to English
+// Translate endpoint: returns English translation from MSA
+app.post("/translate", async (req, res) => {
+  const { msa } = req.body;
+  try {
     const translateResponse = await axios.post(
       "https://api.fanar.qa/v1/translations",
       {
@@ -54,24 +66,13 @@ app.post("/process", async (req, res) => {
           Authorization: `Bearer ${FANAR_API_KEY}`,
           "Content-Type": "application/json",
         },
-        timeout: 30000
       }
     );
-
-    console.log("Translation response:", translateResponse.data);
     let english = translateResponse.data.text;
-    // if (translateResponse.data.translated) {
-    //   english = translateResponse.data.translated;
-    // } else if (translateResponse.data.translations && translateResponse.data.translations.length > 0) {
-    //   english = translateResponse.data.translations[0].translated;
-    // } else {
-    //   throw new Error("Unexpected translation response structure");
-    // }
-
-    res.json({ msa, english });
+    res.json({ english });
   } catch (err) {
-    console.error("Fanar processing error:", err.message);
-    res.status(500).json({ error: "Post-processing failed." });
+    console.error("Fanar translate error:", err.message);
+    res.status(500).json({ error: "Translation failed." });
   }
 });
 
