@@ -1,14 +1,20 @@
 from fastapi import FastAPI, File, UploadFile, Request
 from fastapi.middleware.cors import CORSMiddleware
 import cv2
+import os
 import numpy as np
 import pickle
 import mediapipe as mp
 from fastapi.responses import StreamingResponse
 import requests
 from io import BytesIO
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI()
+
+FANAR_API_KEY = os.getenv("FANAR_KEY")
 
 # Allow CORS from your frontend origin
 app.add_middleware(
@@ -93,7 +99,7 @@ async def generate_tts(request: Request):
     }
 
     headers = {
-        "Authorization": "Bearer fmFrMl3wHnB9SFnb8bzxNFpGCVE18Wcz",
+        "Authorization": f"Bearer {FANAR_API_KEY}",
         "Content-Type": "application/json"
     }
 
