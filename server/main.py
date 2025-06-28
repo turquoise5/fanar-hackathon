@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, Request
+from fastapi import FastAPI, File, UploadFile, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import cv2
 import os
@@ -104,11 +104,10 @@ async def generate_tts(request: Request):
     }
 
     response = requests.post("https://api.fanar.qa/v1/audio/speech", headers=headers, json=tts_payload)
-    with open("greeting.mp3", "wb") as f:
-        f.write(response.content)
     if response.status_code == 200:
         return StreamingResponse(BytesIO(response.content), media_type="audio/mpeg")
     else:
+        raise HTTPException(status_code=500, detail="Text-to-Speech failed. Please try again.")
         print("Fanar API Error:")
         print("Status:", response.status_code)
         print("Response:", response.text)
