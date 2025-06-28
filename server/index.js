@@ -99,9 +99,14 @@ app.post("/transcribe", upload.single("audio"), async (req, res) => {
   }
 });
 
+
 app.post("/summarize", async (req, res) => {
-  const { text } = req.body;
+  const { text, lang } = req.body; 
   try {
+    const prompt = 
+      lang === "en" 
+      ? `Summarize the following text in concise English. If the text has any mistakes or is unclear, do not add any commentary or explanation, just do your best to understand from context and show only the summary itself. Do not add any introduction or extra phrases.\n\n${text}`
+      : `لا تضع أي شيء آخر في ردك إلا التلخيص. إذا كان في النص أي أخطاء أو غموض، لا تضف أي تعليق أو شرح أو تصحيح إضافي، فقط حاول فهم المقصود من السياق وأعد كتابة التلخيص كما هو بأفضل صورة ممكنة. لا تكتب أي مقدمة أو شرح أو عبارات إضافية:\n\n${text}`;
     const summaryResponse = await axios.post(
       "https://api.fanar.qa/v1/chat/completions",
       {
@@ -109,7 +114,7 @@ app.post("/summarize", async (req, res) => {
         messages: [
           {
             role: "user",
-            content: `لخص النص التالي بإيجاز وباللغة العربية الفصحى:\n\n${text}`
+            content: prompt,
           }
         ]
       },
@@ -123,7 +128,11 @@ app.post("/summarize", async (req, res) => {
     const summary = summaryResponse.data.choices[0].message.content;
     res.json({ summary });
   } catch (err) {
-    console.error("Fanar summary error:", err.message);
+    if (err.response) {
+      console.error("Fanar summary error:", err.response.data);
+    } else {
+      console.error("Fanar summary error:", err.message);
+    }
     res.status(500).json({ error: "Summary failed." });
   }
 });
