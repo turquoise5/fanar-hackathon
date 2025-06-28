@@ -141,10 +141,11 @@ function App() {
   
       // English summary if toggled
       if (showEnglishSummary) {
-        const enRes = await axios.post("http://localhost:4000/translate", { text: summary});
-        setEnglishSummary(enRes.data.summary);
+        const enRes = await axios.post("http://localhost:4000/translate", { msa: res.data.summary});
+        setEnglishSummary(enRes.data.english);
       }
     } catch (err) {
+      console.log("error translating:", err);
       setSummary("Summary failed.");
       setEnglishSummary("");
       console.error("Summary failed:", err);
