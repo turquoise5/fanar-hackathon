@@ -12,7 +12,10 @@ const TranscriptionUI = ({
   clearAll, 
   summary, 
   isSummarizing, 
-  generateSummary
+  generateSummary, 
+  showEnglishSummary, 
+  englishSummary, 
+  setShowEnglishSummary
 }) => (
   <div className="transcription-container">
     <h1 className="app-title">Simulated Live Transcription by Fanar</h1>
@@ -83,10 +86,22 @@ const TranscriptionUI = ({
       <button onClick={generateSummary} disabled={isSummarizing || !transcript}>
         {isSummarizing ? "Summarizing..." : "Generate Summary"}
       </button>
+      <button
+        style={{ marginLeft: 10 }}
+        onClick={() => setShowEnglishSummary((prev) => !prev)}
+        disabled={isSummarizing}
+      >
+        {showEnglishSummary ? "Hide English Summary" : "Show English Summary"}
+      </button>
       <div className="box arabic" style={{ marginTop: "10px" }}>
         {summary}
       </div>
-    </div>
+      {showEnglishSummary && (
+        <div className="box english" style={{ marginTop: "10px" }}>
+          {englishSummary}
+        </div>
+      )}
+    </div>    
   </div>
 );
 
