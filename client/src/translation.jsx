@@ -2,6 +2,63 @@ import "./App.css";
 import React, { useState, useEffect } from "react";
 import { toggleAudio, stopAudio, setOnAudioEnd } from "./speech";
 
+function formatSummary(summary) {
+  if (!summary) return null;
+  return summary.split('\n').map((line, idx) => {
+    // Match bullet points with bold: - **bold** rest of line
+    const bulletBoldMatch = line.match(/^- \*\*(.+?)\*\*(.*)/);
+    if (bulletBoldMatch) {
+      const restParts = bulletBoldMatch[2].split(/(https?:\/\/[^\s]+)/g).filter(Boolean);
+      return (
+        <div key={idx} style={{ marginLeft: 10 }}>
+          <span style={{ fontWeight: 'bold' }}>• {bulletBoldMatch[1]}</span>
+          {restParts.map((part, i) =>
+            part.startsWith('http') ? (
+              <a key={i} href={part} target="_blank" rel="noopener noreferrer">
+                Wikipedia
+              </a>
+            ) : (
+              <span key={i}>{part}</span>
+            )
+          )}
+        </div>
+      );
+    }
+    // Match normal bullet points: - rest of line
+    if (line.trim().startsWith('- ')) {
+      const restParts = line.slice(2).split(/(https?:\/\/[^\s]+)/g).filter(Boolean);
+      return (
+        <div key={idx} style={{ marginLeft: 10 }}>
+          • {restParts.map((part, i) =>
+            part.startsWith('http') ? (
+              <a key={i} href={part} target="_blank" rel="noopener noreferrer">
+                Wikipedia
+              </a>
+            ) : (
+              <span key={i}>{part}</span>
+            )
+          )}
+        </div>
+      );
+    }
+    // For lines with links but no bullets
+    const lineParts = line.split(/(https?:\/\/[^\s]+)/g).filter(Boolean);
+    return (
+      <div key={idx}>
+        {lineParts.map((part, i) =>
+          part.startsWith('http') ? (
+            <a key={i} href={part} target="_blank" rel="noopener noreferrer">
+              Wikipedia
+            </a>
+          ) : (
+            <span key={i}>{part}</span>
+          )
+        )}
+      </div>
+    );
+  });
+}
+
 const TranscriptionUI = ({
   transcript,
   cleanedMSA,
@@ -62,10 +119,10 @@ const TranscriptionUI = ({
         </div>
       </div>
       
-      <div>
+      <div className="context">
         <label>
           <h2>Context For the Transcription:</h2>
-          <textarea
+          <textarea id="arabic context"
             value={context}
             onChange={e => setContext(e.target.value)}
             placeholder="Add any context to help transcribe/translate more accurately..."
@@ -151,11 +208,11 @@ const TranscriptionUI = ({
         {showEnglishSummary ? "Hide English Summary" : "Show English Summary"}
       </button>
       <div className="box arabic" style={{ marginTop: "10px" }}>
-        {summary}
+        {formatSummary(summary)}
       </div>
       {showEnglishSummary && (
         <div className="box english" style={{ marginTop: "10px" }}>
-          {englishSummary}
+          {formatSummary(englishSummary)}
         </div>
       )}
     </div>

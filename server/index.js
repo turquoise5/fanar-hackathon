@@ -26,11 +26,21 @@ app.post("/clean", async (req, res) => {
         messages: [
           {
             role: "user",
-            content: `ترجم النص التالي إلى اللغة العربية الفصحى الحديثة فقط. إذا كان هناك أي غموض في الكلمات أو كان النص غير واضح بسبب مشاكل في النسخ، استخدم السياق المقدم لمحاولة فهم المعنى الصحيح. أضف علامات الترقيم المناسبة. دورك هو مترجم إلى العربية الفصحى، ويجب أن تخرج فقط الترجمة النهائية دون أي شرح أو تعليق أو إضافات أخرى.
-                      سياق إضافي: ${context}
+            content: `You are an intent-driven Modern Standard Arabic (MSA) translator. Your only task is to translate the given text to Modern Standard Arabic (MSA). 
+            If there is any ambiguity or unclear words, use the provided context to infer the meaning. Add appropriate punctuation. 
+            Do not add any commentary, explanation, or extra text—just output the MSA translation.
+            
+            Intent: Translate to Modern Standard Arabic (MSA).
+            
+            ${context ? `Context: ${context}\n` : ""}
+            Text:
+            ${text}`
+            
+            // content: `ترجم النص التالي إلى اللغة العربية الفصحى الحديثة فقط. إذا كان هناك أي غموض في الكلمات أو كان النص غير واضح بسبب مشاكل في النسخ، استخدم السياق المقدم لمحاولة فهم المعنى الصحيح. أضف علامات الترقيم المناسبة. دورك هو مترجم إلى العربية الفصحى، ويجب أن تخرج فقط الترجمة النهائية دون أي شرح أو تعليق أو إضافات أخرى.
+            //           سياق إضافي: ${context}
 
-                      النص:
-                      ${text}`
+            //           النص:
+            //           ${text}`
           }
         ]
       },
@@ -102,12 +112,24 @@ app.post("/transcribe", upload.single("audio"), async (req, res) => {
 
 
 app.post("/summarize", async (req, res) => {
-  const { text, lang } = req.body; 
+  const { text, lang } = req.body;
+  const engPrompt = `You are an intent-driven summarizer. Your only task is to summarize the given text in English using bullet points for clarity. Highlight key terms. If any relevant concepts, organizations, or terms are mentioned, include a relevant link from Wikipedia (if possible) for each. Only output the summary in this format, with no extra commentary.
+  
+  Intent: Summarize in English with bullet points, key terms, and Wikipedia links.
+  
+  Text:
+  ${text}`;
+  
+  const arPrompt = `أنت ملخص يعتمد على النية. مهمتك الوحيدة هي تلخيص النص التالي باللغة العربية الفصحى باستخدام النقاط لتوضيح الأفكار. أبرز المصطلحات الرئيسية. إذا تم ذكر مفاهيم أو منظمات أو مصطلحات مهمة، أضف رابطًا من ويكيبيديا (إن أمكن) لكل منها. أخرج الملخص فقط بهذا التنسيق، دون أي تعليقات إضافية.
+  النية: تلخيص النص بالنقاط والمصطلحات وروابط ويكيبيديا.
+  النص:
+  ${text}`;
+  
+  // const engPrompt = `Summarize the following text in English using bullet points for clarity. Highlight key terms. If any relevant concepts, organizations, or terms are mentioned, include a relevant link from Wikipedia (if possible). Only output the summary in this format, with no extra commentary.\n\nText:\n${text}`;
+  // const arPrompt = `لخص النص التالي باللغة العربية الفصحى باستخدام النقاط لتوضيح الأفكار. أبرز المصطلحات الرئيسية. إذا تم ذكر مفاهيم أو منظمات أو مصطلحات مهمة، أضف رابطًا من ويكيبيديا (إن أمكن) . أخرج الملخص فقط بهذا التنسيق، دون أي تعليقات إضافية.\n\nالنص:\n${text}`;
+  const prompt = lang === "en" ? engPrompt : arPrompt;
+  
   try {
-    const prompt = 
-      lang === "en" 
-      ? `Summarize the following text in concise English. If the text has any mistakes or is unclear, do not add any commentary or explanation, just do your best to understand from context and show only the summary itself. Do not add any introduction or extra phrases.\n\n${text}`
-      : `لا تضع أي شيء آخر في ردك إلا التلخيص. إذا كان في النص أي أخطاء أو غموض، لا تضف أي تعليق أو شرح أو تصحيح إضافي، فقط حاول فهم المقصود من السياق وأعد كتابة التلخيص كما هو بأفضل صورة ممكنة. لا تكتب أي مقدمة أو شرح أو عبارات إضافية:\n\n${text}`;
     const summaryResponse = await axios.post(
       "https://api.fanar.qa/v1/chat/completions",
       {
@@ -137,46 +159,6 @@ app.post("/summarize", async (req, res) => {
     res.status(500).json({ error: "Summary failed." });
   }
 });
-
-app.post("/speak", async (req, res) => {
-  const { text } = req.body;
-
-  if (!text) {
-    return res.status(400).json({ error: "Text is required" });
-  }
-
-  try {
-    const ttsResponse = await axios.post(
-      "https://api.fanar.qa/v1/audio/speech",
-      {
-        model: "Fanar-Aura-TTS-1",
-        input: text,
-        voice: "default",
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${FANAR_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        responseType: "arraybuffer",
-      }
-    );
-
-    res.setHeader("Content-Type", "audio/mpeg");
-    res.send(ttsResponse.data);
-  } catch (err) {
-    if (err.response && err.response.data) {
-      const errorString = Buffer.from(err.response.data).toString("utf-8");
-      console.error("API error data:", errorString);
-      console.error("API error status:", err.response.status);
-    } else {
-      console.error("Error:", err.message);
-    }
-
-    res.status(500).json({ error: "Text-to-speech failed." });
-  }
-});
-
 
 app.listen(4000, () => {
   console.log("Server running on http://localhost:4000");

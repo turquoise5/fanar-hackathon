@@ -127,7 +127,7 @@ function App() {
     const interval = setInterval(() => {
       // Use ref to get latest transcript
       processTranscript(transcriptRef.current); 
-    }, 30000);
+    }, 15000);
     
     return () => clearInterval(interval);
   }, [recording, processTranscript]);
@@ -142,8 +142,10 @@ function App() {
   
       // English summary if toggled
       if (showEnglishSummary) {
-        const enRes = await axios.post("http://localhost:4000/translate", { msa: res.data.summary});
-        setEnglishSummary(enRes.data.english);
+        console.log(res.data.summary)
+        const enRes = await axios.post("http://localhost:4000/summarize", { text: res.data.summary, lang: "en"});
+        setEnglishSummary(enRes.data.summary);
+        console.log(englishSummary);
       }
     } catch (err) {
       console.log("error translating:", err);
